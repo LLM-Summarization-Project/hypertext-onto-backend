@@ -2,9 +2,10 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { OntologyModule } from './ontology/ontology.module';
+import { HyperlinkModule } from './hyperlink/hyperlink.module';
 
 @Module({
-  imports: [OntologyModule],
+  imports: [OntologyModule,HyperlinkModule],
   controllers: [AppController],
   providers: [AppService],
 })
