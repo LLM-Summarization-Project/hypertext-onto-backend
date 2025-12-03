@@ -1,0 +1,39 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model OntologyTopic {
+  id          String   @id @default(uuid()) @db.Uuid
+  userId      String
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+
+  // ✅ node-level frequency / scores
+  frequency   Int      @default(0)   // raw count (occurrences)
+  score       Float?                // optional normalized score (e.g., 0..1, TF-IDF, etc.)
+
+  outgoingRelations OntologyTopicRelation[] @relation("FromTopic")
+  incomingRelations OntologyTopicRelation[] @relation("ToTopic")
+
+  @@unique([userId, name])
+  @@index([userId])
+}
+
+model OntologyTopicRelation {
+  fromTopicId String @db.Uuid
+  toTopicId   String @db.Uuid
+
+  fromTopic   OntologyTopic @relation("FromTopic", fields: [fromTopicId], references: [id], onDelete: Cascade)
+  toTopic     OntologyTopic @relation("ToTopic",   fields: [toTopicId],   references: [id], onDelete: Cascade)
+
+  // ⬇ Optional: keep if you might encode “relation strength/type” later; otherwise remove
+  weight      Float?        // relation strength (not word freq)
+
+  @@id([fromTopicId, toTopicId])
+}

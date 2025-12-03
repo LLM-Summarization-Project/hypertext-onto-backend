@@ -1,0 +1,172 @@
+// ------------ Prisma base ------------
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ------------ Enums ------------
+enum VideoStatus {
+  queued
+  processing
+  done
+  error
+}
+
+enum SummaryStatus {
+  QUEUED
+  RUNNING
+  DONE
+  ERROR
+}
+
+// ------------ Models ------------
+model User {
+  id        String   @id @default(uuid()) @db.Uuid
+  username  String   @unique
+  password  String
+  createdAt DateTime @default(now())
+
+  videos    Video[]
+  qas       QuestionAnswer[]
+}
+
+model Video {
+  id        String       @id @default(uuid()) @db.Uuid
+  userId    String       @db.Uuid
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  title     String?
+  source    String?      // e.g. "youtube" | "upload"
+  url       String?
+  filePath  String?
+  status    VideoStatus  @default(queued)
+  createdAt DateTime     @default(now())
+
+  transcripts  Transcript[]
+  summaries    Summary[]
+  captions     Caption[]
+  qas          QuestionAnswer[]
+  summaryStat  SummaryStat?
+  topics       OntologyTopic[]
+
+  @@index([userId])
+}
+
+model Transcript {
+  id        String   @id @default(uuid()) @db.Uuid
+  videoId   String   @db.Uuid
+  video     Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
+
+  text      String
+  duration  Float?   // seconds
+  createdAt DateTime @default(now())
+
+  @@index([videoId])
+}
+
+model Summary {
+  id                      String          @id @default(uuid())
+  youtubeUrl              String
+  status                  SummaryStatus   @default(QUEUED)
+  percent                 Int             @default(0)
+  startedAt               DateTime        @default(now())
+  finishedAt              DateTime?
+
+  transcriptPath          String?
+  bulletPath              String?
+  summaryPath             String?
+  sceneFactsPath          String?
+  keyword                 String?
+
+  whisperModel            String?
+  asrDevice               String?
+  vlDevice                String?
+  vlModel                 String?
+  sceneThresh             Float?
+  enableOcr               Boolean?
+
+  frames                  Int?
+  bulletCount             Int?
+  transcriptWord          Int?
+  summaryWord             Int?
+  timeDownloadSec         Float?
+  timeSpeechtoTextSec     Float?
+  timeCaptionImageSec     Float?
+  timeSummarizeSec        Float?
+  timeTotal               Float?
+  durationSec             Float?
+
+  errorMessage  String?    @db.Text
+
+  @@index([status, startedAt])
+}
+
+model Caption {
+  id             String   @id @default(uuid()) @db.Uuid
+  videoId        String   @db.Uuid
+  video          Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
+
+  captionShort   String?
+  captionDetailed String?
+  confidence     Float?   // 0..1
+  createdAt      DateTime @default(now())
+
+  @@index([videoId])
+}
+
+model QuestionAnswer {
+  id        String   @id @default(uuid()) @db.Uuid
+  videoId   String   @db.Uuid
+  video     Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
+
+  question  String
+  answer    String?
+  createdAt DateTime @default(now())
+
+  @@index([videoId])
+}
+
+model SummaryStat {
+  // one-to-one with Video
+  videoId           String        @id @db.Uuid
+  video             Video         @relation(fields: [videoId], references: [id], onDelete: Cascade)
+
+  modelName         String?
+  asrDuration       Float?        // seconds
+  captionDuration   Float?
+  summarizeDuration Float?
+  status            SummaryStatus @default(queued)
+}
+
+model OntologyTopic {
+  id          String   @id @default(uuid()) @db.Uuid
+  videoId     String   @db.Uuid
+  video       Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
+
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+
+  // self relations
+  outgoingRelations OntologyTopicRelation[] @relation("FromTopic")
+  incomingRelations OntologyTopicRelation[] @relation("ToTopic")
+
+  @@unique([videoId, name]) // avoid duplicate topic names within the same video
+  @@index([videoId])
+}
+
+model OntologyTopicRelation {
+  fromTopicId String @db.Uuid
+  toTopicId   String @db.Uuid
+
+  fromTopic   OntologyTopic @relation("FromTopic", fields: [fromTopicId], references: [id], onDelete: Cascade)
+  toTopic     OntologyTopic @relation("ToTopic",   fields: [toTopicId],   references: [id], onDelete: Cascade)
+
+  weight      Float? @default(1.0)
+
+  @@id([fromTopicId, toTopicId])
+}

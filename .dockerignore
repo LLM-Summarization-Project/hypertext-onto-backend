@@ -8,3 +8,4 @@ Dockerfile
 coverage
 test
 .vscode
+.test
