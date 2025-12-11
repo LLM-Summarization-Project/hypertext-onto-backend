@@ -13,6 +13,7 @@ model User {
   password  String
   createdAt DateTime  @default(now())
   Summary   Summary[]
+  topics    UserOntologyTopic[]
 }
 
 model Summary {
@@ -60,20 +61,31 @@ enum SummaryStatus {
 
 model OntologyTopic {
   id          String   @id @default(uuid()) @db.Uuid
-  userId      Int
-  name        String
+  name        String   @unique
   description String?
   createdAt   DateTime @default(now())
 
   // ✅ node-level frequency / scores
   frequency   Int      @default(0)   // raw count (occurrences)
-  score       Float?                // optional normalized score (e.g., 0..1, TF-IDF, etc.)
+  score       Float?                 // optional normalized score (e.g., 0..1, TF-IDF, etc.)
 
+  users             UserOntologyTopic[]     @relation("TopicUsers")
   outgoingRelations OntologyTopicRelation[] @relation("FromTopic")
   incomingRelations OntologyTopicRelation[] @relation("ToTopic")
+}
 
-  @@unique([userId, name])
+model UserOntologyTopic {
+  userId    Int
+  topicId   String   @db.Uuid
+
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  topic     OntologyTopic @relation("TopicUsers", fields: [topicId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@id([userId, topicId])
   @@index([userId])
+  @@index([topicId])
 }
 
 model OntologyTopicRelation {
