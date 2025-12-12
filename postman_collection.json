@@ -1,0 +1,116 @@
+{
+    "info": {
+        "name": "Ontology API",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:3001"
+        }
+    ],
+    "item": [
+        {
+            "name": "Topics",
+            "item": [
+                {
+                    "name": "Create/Update Topic",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"userId\": 1,\n  \"name\": \"Machine Learning\",\n  \"description\": \"AI and ML topic\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/ontology/topic",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "ontology",
+                                "topic"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get All Topics (Graph Format)",
+                    "request": {
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{baseUrl}}/ontology/topics",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "ontology",
+                                "topics"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Topics by User",
+                    "request": {
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{baseUrl}}/ontology/topics/user/1",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "ontology",
+                                "topics",
+                                "user",
+                                "1"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Demo Ontology",
+            "item": [
+                {
+                    "name": "Get Demo Ontology",
+                    "request": {
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{baseUrl}}/ontology",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "ontology"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Node by Word",
+                    "request": {
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{baseUrl}}/ontology/node/การเงิน",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "ontology",
+                                "node",
+                                "การเงิน"
+                            ]
+                        }
+                    }
+                }
+            ]
+        }
+    ]
+}
