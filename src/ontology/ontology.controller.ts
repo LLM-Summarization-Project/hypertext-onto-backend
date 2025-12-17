@@ -1,6 +1,12 @@
-import { Controller, Get, Post, Param, Body, NotFoundException, Query, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Post, Param, Body, NotFoundException, ParseIntPipe } from '@nestjs/common';
 import { OntologyService } from './ontology.service';
 import { CreateTopicDto } from './dto/create-topic.dto';
+
+class ClickTopicDto {
+  userId: number;
+  clickedWord: string;
+  parentTopicId?: string;
+}
 
 @Controller('ontology')
 export class OntologyController {
@@ -20,15 +26,25 @@ export class OntologyController {
     return node;
   }
 
-  // ========== New DB-backed endpoints ==========
+  // ========== DB-backed endpoints ==========
 
-  // POST /ontology/topic - Create or update a topic (signal from microservice)
+  // POST /ontology/topic - Create topic + call hypertext_backend for LLM
   @Post('topic')
   async createOrUpdateTopic(@Body() dto: CreateTopicDto) {
     return this.ontologyService.createOrUpdateTopic(dto);
   }
 
-  // GET /ontology/topics - Get all topics from DB
+  // POST /ontology/click - Handle hypertext click (forward to hypertext_backend)
+  @Post('click')
+  async handleHypertextClick(@Body() dto: ClickTopicDto) {
+    return this.ontologyService.handleHypertextClick(
+      dto.userId,
+      dto.clickedWord,
+      dto.parentTopicId,
+    );
+  }
+
+  // GET /ontology/topics - Get all topics from DB as graph
   @Get('topics')
   async getTopicsFromDb() {
     return this.ontologyService.getTopicsFromDb();
@@ -38,5 +54,19 @@ export class OntologyController {
   @Get('topics/user/:userId')
   async getTopicsByUser(@Param('userId', ParseIntPipe) userId: number) {
     return this.ontologyService.getTopicsByUser(userId);
+  }
+
+  // GET /ontology/topic/:name - Get topic by name with full details
+  @Get('topic/:name')
+  async getTopicByName(@Param('name') name: string) {
+    const topic = await this.ontologyService.getTopicByName(decodeURIComponent(name));
+    if (!topic) throw new NotFoundException(`Topic "${name}" not found`);
+    return topic;
+  }
+
+  // POST /ontology/sync - Sync topics from hypertext_backend
+  @Post('sync')
+  async syncFromHypertextBackend() {
+    return this.ontologyService.syncFromHypertextBackend();
   }
 }

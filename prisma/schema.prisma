@@ -69,6 +69,10 @@ model OntologyTopic {
   frequency   Int      @default(0)   // raw count (occurrences)
   score       Float?                 // optional normalized score (e.g., 0..1, TF-IDF, etc.)
 
+  // 🔗 LLM-generated related topics (raw keywords from LLM)
+  relatedTopics String[] @default([])
+
+  // 🔗 Relationships (use OntologyTopicRelation for actual graph connections)
   users             UserOntologyTopic[]     @relation("TopicUsers")
   outgoingRelations OntologyTopicRelation[] @relation("FromTopic")
   incomingRelations OntologyTopicRelation[] @relation("ToTopic")
