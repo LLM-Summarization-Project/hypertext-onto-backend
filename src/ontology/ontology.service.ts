@@ -349,7 +349,7 @@ export class OntologyService {
    */
   async syncFromHypertextBackend() {
     try {
-      const response = await axios.get(`${this.hypertextApiUrl}/hypertext/graph`);
+      const response = await axios.get(`${this.hypertextApiUrl}/hypertext/topic`);
       const { nodes } = response.data;
 
       for (const node of nodes) {
@@ -359,7 +359,7 @@ export class OntologyService {
             name: node.name,
             description: node.description,
             relatedTopics: node.relatedTopics || [],
-            frequency: node.weight || 1,
+            frequency: node.frequency || 1,
           },
           update: {
             ...(node.description && { description: node.description }),

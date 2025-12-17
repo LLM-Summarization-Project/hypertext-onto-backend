@@ -39,5 +39,5 @@ COPY --from=build /app/node_modules ./node_modules
 COPY package.json pnpm-lock.yaml* ./
 
 EXPOSE 3000
-CMD ["node", "dist/main.js"]
+CMD ["/bin/sh", "-c", "npx prisma migrate deploy && node dist/main.js"]
 
