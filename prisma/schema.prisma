@@ -8,10 +8,10 @@ datasource db {
 }
 
 model User {
-  id        Int       @id @default(autoincrement())
-  username  String    @unique
+  id        Int                 @id @default(autoincrement())
+  username  String              @unique
   password  String
-  createdAt DateTime  @default(now())
+  createdAt DateTime            @default(now())
   Summary   Summary[]
   topics    UserOntologyTopic[]
 }
@@ -51,41 +51,25 @@ model Summary {
   @@index([status, startedAt])
 }
 
-enum SummaryStatus {
-  QUEUED
-  RUNNING
-  DONE
-  ERROR
-  CANCEL
-}
-
 model OntologyTopic {
-  id          String   @id @default(uuid()) @db.Uuid
-  name        String   @unique
-  description String?
-  createdAt   DateTime @default(now())
-
-  // ✅ node-level frequency / scores
-  frequency   Int      @default(0)   // raw count (occurrences)
-  score       Float?                 // optional normalized score (e.g., 0..1, TF-IDF, etc.)
-
-  // 🔗 LLM-generated related topics (raw keywords from LLM)
-  relatedTopics String[] @default([])
-
-  // 🔗 Relationships (use OntologyTopicRelation for actual graph connections)
-  users             UserOntologyTopic[]     @relation("TopicUsers")
+  id                String                  @id @default(uuid()) @db.Uuid
+  name              String                  @unique
+  description       String?
+  createdAt         DateTime                @default(now())
+  frequency         Int                     @default(0)
+  score             Float?
+  relatedTopics     String[]                @default([])
   outgoingRelations OntologyTopicRelation[] @relation("FromTopic")
   incomingRelations OntologyTopicRelation[] @relation("ToTopic")
+  users             UserOntologyTopic[]     @relation("TopicUsers")
 }
 
 model UserOntologyTopic {
   userId    Int
-  topicId   String   @db.Uuid
-
-  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  topicId   String        @db.Uuid
+  createdAt DateTime      @default(now())
   topic     OntologyTopic @relation("TopicUsers", fields: [topicId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([userId, topicId])
   @@index([userId])
@@ -93,14 +77,19 @@ model UserOntologyTopic {
 }
 
 model OntologyTopicRelation {
-  fromTopicId String @db.Uuid
-  toTopicId   String @db.Uuid
-
+  fromTopicId String        @db.Uuid
+  toTopicId   String        @db.Uuid
+  weight      Float?
   fromTopic   OntologyTopic @relation("FromTopic", fields: [fromTopicId], references: [id], onDelete: Cascade)
-  toTopic     OntologyTopic @relation("ToTopic",   fields: [toTopicId],   references: [id], onDelete: Cascade)
-
-  // ⬇ Optional: keep if you might encode “relation strength/type” later; otherwise remove
-  weight      Float?        // relation strength (not word freq)
+  toTopic     OntologyTopic @relation("ToTopic", fields: [toTopicId], references: [id], onDelete: Cascade)
 
   @@id([fromTopicId, toTopicId])
+}
+
+enum SummaryStatus {
+  QUEUED
+  RUNNING
+  DONE
+  ERROR
+  CANCEL
 }
