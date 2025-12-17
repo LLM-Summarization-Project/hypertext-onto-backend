@@ -204,7 +204,6 @@ export class OntologyService {
               description,
               relatedTopics: relatedTopics || [],
               frequency: 1,
-              ...(returnedParentId && { parentTopicId: returnedParentId }),
             },
           });
         }
@@ -321,8 +320,6 @@ export class OntologyService {
       include: {
         outgoingRelations: { include: { toTopic: true } },
         incomingRelations: { include: { fromTopic: true } },
-        parentTopic: true,
-        childTopics: true,
         users: { include: { user: { select: { id: true, username: true } } } },
       },
     });
@@ -335,8 +332,6 @@ export class OntologyService {
       description: topic.description,
       relatedTopics: topic.relatedTopics,
       frequency: topic.frequency,
-      parentTopic: topic.parentTopic?.name,
-      childTopics: topic.childTopics?.map(c => c.name) || [],
       linkedTopics: topic.outgoingRelations.map(rel => ({
         name: rel.toTopic.name,
         weight: rel.weight,
