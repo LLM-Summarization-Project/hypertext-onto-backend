@@ -22,6 +22,8 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 RUN corepack enable && corepack prepare pnpm@9 --activate
+ARG DATABASE_URL
+RUN npx prisma db pull
 RUN npx prisma generate
 RUN pnpm build
 
