@@ -250,22 +250,96 @@ export class OntologyService {
     }
   }
 
+  // Helper to convert hex to RGB
+  private hexToRgb(hex: string) {
+    const bigint = parseInt(hex.replace('#', ''), 16);
+    const r = (bigint >> 16) & 255;
+    const g = (bigint >> 8) & 255;
+    const b = bigint & 255;
+    return { r, g, b };
+  }
+
+  // Helper to convert RGB to hex
+  private rgbToHex(r: number, g: number, b: number) {
+    return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+  }
+
+  // Generate a color from user ID (consistent hashing)
+  private hashUserIdToColor(userId: number) {
+    // Simple hash to get a Hue (0-360)
+    // Use a large prime multiplier to scatter values
+    const hash = (userId * 2654435761) % 360;
+
+    // Convert HSL to RGB (simple conversion for consistent saturation/lightness)
+    // Saturation 70%, Lightness 50% for good visibility
+    const s = 0.7;
+    const l = 0.5;
+    const c = (1 - Math.abs(2 * l - 1)) * s;
+    const x = c * (1 - Math.abs(((hash / 60) % 2) - 1));
+    const m = l - c / 2;
+
+    let r = 0, g = 0, b = 0;
+    if (0 <= hash && hash < 60) { r = c; g = x; b = 0; }
+    else if (60 <= hash && hash < 120) { r = x; g = c; b = 0; }
+    else if (120 <= hash && hash < 180) { r = 0; g = c; b = x; }
+    else if (180 <= hash && hash < 240) { r = 0; g = x; b = c; }
+    else if (240 <= hash && hash < 300) { r = x; g = 0; b = c; }
+    else if (300 <= hash && hash < 360) { r = c; g = 0; b = x; }
+
+    return {
+      r: Math.round((r + m) * 255),
+      g: Math.round((g + m) * 255),
+      b: Math.round((b + m) * 255)
+    };
+  }
+
+  // Blend multiple colors
+  private blendColors(userIds: number[]): string {
+    if (userIds.length === 0) return '#cccccc'; // Default gray if no users
+
+    let totalR = 0, totalG = 0, totalB = 0;
+
+    for (const uid of userIds) {
+      const color = this.hashUserIdToColor(uid);
+      totalR += color.r;
+      totalG += color.g;
+      totalB += color.b;
+    }
+
+    // Average
+    const avgR = Math.round(totalR / userIds.length);
+    const avgG = Math.round(totalG / userIds.length);
+    const avgB = Math.round(totalB / userIds.length);
+
+    return this.rgbToHex(avgR, avgG, avgB);
+
+  }
+
   /**
    * Get all topics as graph
    */
   async getTopicsFromDb() {
     const topics = await this.prisma.ontologyTopic.findMany({
-      include: { outgoingRelations: true },
+      include: {
+        outgoingRelations: true,
+        users: { select: { userId: true } }
+      },
       orderBy: { frequency: 'desc' },
     });
 
-    const nodes = topics.map((topic) => ({
-      id: topic.id,
-      target: topic.name,
-      weight: topic.frequency,
-      description: topic.description,
-      relatedTopics: topic.relatedTopics,
-    }));
+    const nodes = topics.map((topic) => {
+      const userIds = topic.users.map(u => u.userId);
+      const blendedColor = this.blendColors(userIds);
+
+      return {
+        id: topic.id,
+        target: topic.name,
+        weight: topic.frequency,
+        description: topic.description,
+        relatedTopics: topic.relatedTopics,
+        color: blendedColor,
+      };
+    });
 
     const links = topics.flatMap((topic) =>
       topic.outgoingRelations.map((rel) => ({
@@ -284,19 +358,28 @@ export class OntologyService {
   async getTopicsByUser(userId: number) {
     const topics = await this.prisma.ontologyTopic.findMany({
       where: { users: { some: { userId } } },
-      include: { outgoingRelations: true },
+      include: {
+        outgoingRelations: true,
+        users: { select: { userId: true } }
+      },
       orderBy: { frequency: 'desc' },
     });
 
     const topicIds = new Set(topics.map((t) => t.id));
 
-    const nodes = topics.map((topic) => ({
-      id: topic.id,
-      target: topic.name,
-      weight: topic.frequency,
-      description: topic.description,
-      relatedTopics: topic.relatedTopics,
-    }));
+    const nodes = topics.map((topic) => {
+      const userIds = topic.users.map(u => u.userId);
+      const blendedColor = this.blendColors(userIds);
+
+      return {
+        id: topic.id,
+        target: topic.name,
+        weight: topic.frequency,
+        description: topic.description,
+        relatedTopics: topic.relatedTopics,
+        color: blendedColor,
+      };
+    });
 
     const links = topics.flatMap((topic) =>
       topic.outgoingRelations

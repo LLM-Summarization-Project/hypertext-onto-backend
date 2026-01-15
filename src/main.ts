@@ -8,6 +8,7 @@ async function bootstrap() {
     origin: [
       'http://localhost:8080', // Next.js dev
       'http://127.0.0.1:8080',
+      'http://localhost:3000',
     ],
     credentials: true,
   });

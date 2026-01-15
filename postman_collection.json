@@ -1,22 +1,65 @@
 {
     "info": {
-        "name": "Ontology API",
+        "name": "Hypertext Onto Backend",
+        "description": "API collection for hypertext-onto-backend",
         "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
     },
     "variable": [
         {
             "key": "baseUrl",
-            "value": "http://localhost:3001"
+            "value": "http://localhost:3000",
+            "type": "string"
         }
     ],
     "item": [
         {
-            "name": "Topics",
+            "name": "Ontology",
             "item": [
                 {
-                    "name": "Create/Update Topic",
+                    "name": "GET - Demo Ontology",
+                    "request": {
+                        "method": "GET",
+                        "url": "{{baseUrl}}/ontology",
+                        "description": "Get demo ontology data"
+                    }
+                },
+                {
+                    "name": "GET - Find Node by Word",
+                    "request": {
+                        "method": "GET",
+                        "url": "{{baseUrl}}/ontology/node/machine%20learning",
+                        "description": "Find a node in demo data by word"
+                    }
+                },
+                {
+                    "name": "GET - All Topics from DB",
+                    "request": {
+                        "method": "GET",
+                        "url": "{{baseUrl}}/ontology/topics",
+                        "description": "Get all topics from database as graph (nodes + links)"
+                    }
+                },
+                {
+                    "name": "GET - Topics by User",
+                    "request": {
+                        "method": "GET",
+                        "url": "{{baseUrl}}/ontology/topics/user/1",
+                        "description": "Get topics for a specific user"
+                    }
+                },
+                {
+                    "name": "GET - Topic by Name",
+                    "request": {
+                        "method": "GET",
+                        "url": "{{baseUrl}}/ontology/topic/machine%20learning",
+                        "description": "Get topic details by name"
+                    }
+                },
+                {
+                    "name": "POST - Create/Update Topic",
                     "request": {
                         "method": "POST",
+                        "url": "{{baseUrl}}/ontology/topic",
                         "header": [
                             {
                                 "key": "Content-Type",
@@ -25,89 +68,56 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n  \"userId\": 1,\n  \"name\": \"Machine Learning\",\n  \"description\": \"AI and ML topic\"\n}"
+                            "raw": "{\n  \"userId\": 1,\n  \"name\": \"artificial intelligence\",\n  \"description\": \"The simulation of human intelligence in machines\"\n}"
                         },
-                        "url": {
-                            "raw": "{{baseUrl}}/ontology/topic",
-                            "host": [
-                                "{{baseUrl}}"
-                            ],
-                            "path": [
-                                "ontology",
-                                "topic"
-                            ]
-                        }
+                        "description": "Create or update a topic (increments frequency, calls hypertext_backend)"
                     }
                 },
                 {
-                    "name": "Get All Topics (Graph Format)",
+                    "name": "POST - Hypertext Click",
                     "request": {
-                        "method": "GET",
-                        "url": {
-                            "raw": "{{baseUrl}}/ontology/topics",
-                            "host": [
-                                "{{baseUrl}}"
-                            ],
-                            "path": [
-                                "ontology",
-                                "topics"
-                            ]
-                        }
+                        "method": "POST",
+                        "url": "{{baseUrl}}/ontology/click",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"userId\": 1,\n  \"clickedWord\": \"neural networks\",\n  \"parentTopicId\": \"optional-parent-topic-id\"\n}"
+                        },
+                        "description": "Handle hypertext click - forwards to hypertext_backend for LLM processing"
                     }
                 },
                 {
-                    "name": "Get Topics by User",
+                    "name": "POST - Sync from Hypertext Backend",
                     "request": {
-                        "method": "GET",
-                        "url": {
-                            "raw": "{{baseUrl}}/ontology/topics/user/1",
-                            "host": [
-                                "{{baseUrl}}"
-                            ],
-                            "path": [
-                                "ontology",
-                                "topics",
-                                "user",
-                                "1"
-                            ]
-                        }
+                        "method": "POST",
+                        "url": "{{baseUrl}}/ontology/sync",
+                        "description": "Sync topics from hypertext_backend to local DB"
                     }
                 }
             ]
         },
         {
-            "name": "Demo Ontology",
+            "name": "Hyperlink",
             "item": [
                 {
-                    "name": "Get Demo Ontology",
+                    "name": "GET - All Keys",
                     "request": {
                         "method": "GET",
-                        "url": {
-                            "raw": "{{baseUrl}}/ontology",
-                            "host": [
-                                "{{baseUrl}}"
-                            ],
-                            "path": [
-                                "ontology"
-                            ]
-                        }
+                        "url": "{{baseUrl}}/hyperlink",
+                        "description": "Get all hyperlink keys"
                     }
                 },
                 {
-                    "name": "Get Node by Word",
+                    "name": "GET - Content by Word",
                     "request": {
                         "method": "GET",
-                        "url": {
-                            "raw": "{{baseUrl}}/ontology/node/การเงิน",
-                            "host": [
-                                "{{baseUrl}}"
-                            ],
-                            "path": [
-                                "ontology",
-                                "node",
-                                "การเงิน"
-                            ]
-                        }
+                        "url": "{{baseUrl}}/hyperlink/example",
+                        "description": "Get hyperlink content for a specific word"
                     }
                 }
             ]
