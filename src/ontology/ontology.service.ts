@@ -315,6 +315,74 @@ export class OntologyService {
 
   }
 
+  // Get complementary (opposite) color
+  private getComplementaryColor(userId: number): string {
+    const userColor = this.hashUserIdToColor(userId);
+    // Complementary color = 255 - each RGB component
+    return this.rgbToHex(
+      255 - userColor.r,
+      255 - userColor.g,
+      255 - userColor.b
+    );
+  }
+
+  // Get user's main color as hex
+  private getUserColor(userId: number): string {
+    const rgb = this.hashUserIdToColor(userId);
+    return this.rgbToHex(rgb.r, rgb.g, rgb.b);
+  }
+
+  /**
+   * Get topics for user with PRIVACY-focused coloring:
+   * - Nodes ONLY owned by this user = user's main color
+   * - Nodes shared with others = complementary/opposite color (just shows "shared", not who)
+   */
+  async getTopicsByUserPrivate(userId: number) {
+    const topics = await this.prisma.ontologyTopic.findMany({
+      where: { users: { some: { userId } } },
+      include: {
+        outgoingRelations: true,
+        users: { select: { userId: true } }
+      },
+      orderBy: { frequency: 'desc' },
+    });
+
+    // Filter out topics with no users
+    const topicsWithUsers = topics.filter((topic) => topic.users.length > 0);
+    const topicIds = new Set(topicsWithUsers.map((t) => t.id));
+
+    const userMainColor = this.getUserColor(userId);
+    const sharedColor = this.getComplementaryColor(userId);
+
+    const nodes = topicsWithUsers.map((topic) => {
+      const userIds = topic.users.map(u => u.userId);
+      // Check if this node is ONLY owned by this user
+      const isExclusive = userIds.length === 1 && userIds[0] === userId;
+
+      return {
+        id: topic.id,
+        target: topic.name,
+        weight: topic.frequency,
+        description: topic.description,
+        relatedTopics: topic.relatedTopics,
+        color: isExclusive ? userMainColor : sharedColor,
+        isShared: !isExclusive, // Optional: frontend can use this for UI hints
+      };
+    });
+
+    const links = topicsWithUsers.flatMap((topic) =>
+      topic.outgoingRelations
+        .filter((rel) => topicIds.has(rel.toTopicId))
+        .map((rel) => ({
+          source: rel.fromTopicId,
+          target: rel.toTopicId,
+          weight: rel.weight ?? 1,
+        })),
+    );
+
+    return { nodes, links };
+  }
+
   /**
    * Get all topics as graph
    */
@@ -327,7 +395,11 @@ export class OntologyService {
       orderBy: { frequency: 'desc' },
     });
 
-    const nodes = topics.map((topic) => {
+    // Filter out topics with no users (colorless nodes)
+    const topicsWithUsers = topics.filter((topic) => topic.users.length > 0);
+    const topicIdsWithUsers = new Set(topicsWithUsers.map((t) => t.id));
+
+    const nodes = topicsWithUsers.map((topic) => {
       const userIds = topic.users.map(u => u.userId);
       const blendedColor = this.blendColors(userIds);
 
@@ -341,12 +413,15 @@ export class OntologyService {
       };
     });
 
-    const links = topics.flatMap((topic) =>
-      topic.outgoingRelations.map((rel) => ({
-        source: rel.fromTopicId,
-        target: rel.toTopicId,
-        weight: rel.weight ?? 1,
-      })),
+    // Only include links where both source and target have users
+    const links = topicsWithUsers.flatMap((topic) =>
+      topic.outgoingRelations
+        .filter((rel) => topicIdsWithUsers.has(rel.toTopicId))
+        .map((rel) => ({
+          source: rel.fromTopicId,
+          target: rel.toTopicId,
+          weight: rel.weight ?? 1,
+        })),
     );
 
     return { nodes, links };
@@ -365,9 +440,12 @@ export class OntologyService {
       orderBy: { frequency: 'desc' },
     });
 
-    const topicIds = new Set(topics.map((t) => t.id));
+    // Filter out topics with no users (colorless nodes) - this is already filtered by userId above,
+    // but we keep this for consistency and safety
+    const topicsWithUsers = topics.filter((topic) => topic.users.length > 0);
+    const topicIds = new Set(topicsWithUsers.map((t) => t.id));
 
-    const nodes = topics.map((topic) => {
+    const nodes = topicsWithUsers.map((topic) => {
       const userIds = topic.users.map(u => u.userId);
       const blendedColor = this.blendColors(userIds);
 
@@ -381,7 +459,7 @@ export class OntologyService {
       };
     });
 
-    const links = topics.flatMap((topic) =>
+    const links = topicsWithUsers.flatMap((topic) =>
       topic.outgoingRelations
         .filter((rel) => topicIds.has(rel.toTopicId))
         .map((rel) => ({

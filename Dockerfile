@@ -6,9 +6,8 @@ WORKDIR /app
 
 RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 
-COPY package.json pnpm-lock.yaml* ./
-RUN corepack enable && corepack prepare pnpm@9 --activate
-RUN pnpm install --no-frozen-lockfile
+COPY package.json package-lock.json* ./
+RUN npm install
 
 # ----------------------------
 # Stage 2: Build the app
@@ -21,11 +20,9 @@ RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-RUN corepack enable && corepack prepare pnpm@9 --activate
 ARG DATABASE_URL
-RUN npx prisma db pull
 RUN npx prisma generate
-RUN pnpm build
+RUN npm run build
 
 # ----------------------------
 # Stage 3: Production image
@@ -38,7 +35,7 @@ RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/prisma ./prisma
 COPY --from=build /app/node_modules ./node_modules
-COPY package.json pnpm-lock.yaml* ./
+COPY package.json package-lock.json* ./
 
 EXPOSE 3000
 CMD ["node", "dist/main.js"]

@@ -50,10 +50,17 @@ export class OntologyController {
     return this.ontologyService.getTopicsFromDb();
   }
 
-  // GET /ontology/topics/user/:userId - Get topics for a specific user
+  // GET /ontology/topics/user/:userId - Get topics for a specific user (ADMIN: shows blended colors)
   @Get('topics/user/:userId')
   async getTopicsByUser(@Param('userId', ParseIntPipe) userId: number) {
     return this.ontologyService.getTopicsByUser(userId);
+  }
+
+  // GET /ontology/topics/user/:userId/private - Get topics for user with PRIVACY coloring
+  // Shows user's color for exclusive nodes, complementary color for shared nodes
+  @Get('topics/user/:userId/private')
+  async getTopicsByUserPrivate(@Param('userId', ParseIntPipe) userId: number) {
+    return this.ontologyService.getTopicsByUserPrivate(userId);
   }
 
   // GET /ontology/topic/:name - Get topic by name with full details
