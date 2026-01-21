@@ -64,6 +64,12 @@ export class OntologyController {
     return this.ontologyService.getTopicsFromDb();
   }
 
+  // GET /ontology/world - Get world topics (with user details)
+  @Get('world')
+  async getWorldOntology() {
+    return this.ontologyService.getWorldOntology();
+  }
+
   // GET /ontology/topics/user/:userId - Get topics for a specific user (ADMIN: shows blended colors)
   @Get('topics/user/:userId')
   async getTopicsByUser(@Param('userId', ParseIntPipe) userId: number) {

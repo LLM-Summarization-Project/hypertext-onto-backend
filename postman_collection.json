@@ -40,6 +40,14 @@
                     }
                 },
                 {
+                    "name": "GET - World Tree (with Users)",
+                    "request": {
+                        "method": "GET",
+                        "url": "{{baseUrl}}/ontology/world",
+                        "description": "Get world tree graph with user details embedded in nodes"
+                    }
+                },
+                {
                     "name": "GET - Topics by User",
                     "request": {
                         "method": "GET",

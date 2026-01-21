@@ -435,6 +435,58 @@ export class OntologyService {
   }
 
   /**
+   * Get all topics as graph for World Tree (includes user details for hover)
+   */
+  async getWorldOntology() {
+    const topics = await this.prisma.ontologyTopic.findMany({
+      include: {
+        outgoingRelations: true,
+        users: {
+          include: {
+            user: { select: { id: true, username: true } }
+          }
+        }
+      },
+      orderBy: { frequency: 'desc' },
+    });
+
+    // Filter out topics with no users
+    const topicsWithUsers = topics.filter((topic) => topic.users.length > 0);
+    const topicIdsWithUsers = new Set(topicsWithUsers.map((t) => t.id));
+
+    const nodes = topicsWithUsers.map((topic) => {
+      const userIds = topic.users.map(u => u.userId);
+      const blendedColor = this.blendColors(userIds);
+
+      return {
+        id: topic.id,
+        target: topic.name,
+        weight: topic.frequency,
+        description: topic.description,
+        relatedTopics: topic.relatedTopics,
+        color: blendedColor,
+        users: topic.users.map(u => ({
+          id: u.user.id,
+          username: u.user.username
+        }))
+      };
+    });
+
+    // Only include links where both source and target have users
+    const links = topicsWithUsers.flatMap((topic) =>
+      topic.outgoingRelations
+        .filter((rel) => topicIdsWithUsers.has(rel.toTopicId))
+        .map((rel) => ({
+          source: rel.fromTopicId,
+          target: rel.toTopicId,
+          weight: rel.weight ?? 1,
+        })),
+    );
+
+    return { nodes, links };
+  }
+
+  /**
    * Get all topics as graph
    */
   async getTopicsFromDb() {
