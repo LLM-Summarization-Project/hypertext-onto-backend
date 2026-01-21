@@ -106,6 +106,24 @@
                         "url": "{{baseUrl}}/ontology/sync",
                         "description": "Sync topics from hypertext_backend to local DB"
                     }
+                },
+                {
+                    "name": "POST - Add User to Topic",
+                    "request": {
+                        "method": "POST",
+                        "url": "{{baseUrl}}/ontology/topic/assign-user",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"userId\": 1,\n  \"topicName\": \"artificial intelligence\"\n}"
+                        },
+                        "description": "Add user to an existing topic"
+                    }
                 }
             ]
         },

@@ -4,6 +4,8 @@ import { PrismaService } from '../prisma/prisma.service';
 import { DEMO_ONTOLOGY } from './ontology.data';
 import { CreateTopicDto } from './dto/create-topic.dto';
 import axios from 'axios';
+import { AddUserToTopicDto } from './dto/add-user-to-topic.dto';
+import { NotFoundException } from '@nestjs/common';
 
 @Injectable()
 export class OntologyService {
@@ -92,6 +94,38 @@ export class OntologyService {
         outgoingRelations: true,
       },
     });
+  }
+
+  /**
+   * Add user to an existing topic by name
+   */
+  async addUserToTopic(dto: AddUserToTopicDto) {
+    // 1. Find the topic
+    const topic = await this.prisma.ontologyTopic.findUnique({
+      where: { name: dto.topicName },
+    });
+
+    if (!topic) {
+      throw new NotFoundException(`Topic "${dto.topicName}" not found`);
+    }
+
+    // 2. Link user to topic
+    await this.prisma.userOntologyTopic.upsert({
+      where: {
+        userId_topicId: {
+          userId: dto.userId,
+          topicId: topic.id,
+        },
+      },
+      create: {
+        userId: dto.userId,
+        topicId: topic.id,
+      },
+      update: {},
+    });
+
+    // 3. Return success
+    return { success: true, message: `User added to topic "${dto.topicName}"` };
   }
 
   /**

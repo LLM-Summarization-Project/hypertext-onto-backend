@@ -1,6 +1,7 @@
 import { Controller, Get, Post, Param, Body, NotFoundException, ParseIntPipe } from '@nestjs/common';
 import { OntologyService } from './ontology.service';
 import { CreateTopicDto } from './dto/create-topic.dto';
+import { AddUserToTopicDto } from './dto/add-user-to-topic.dto';
 
 class ClickTopicDto {
   userId: number;
@@ -32,6 +33,12 @@ export class OntologyController {
   @Post('topic')
   async createOrUpdateTopic(@Body() dto: CreateTopicDto) {
     return this.ontologyService.createOrUpdateTopic(dto);
+  }
+
+  // POST /ontology/topic/assign-user - Add user to existing topic
+  @Post('topic/assign-user')
+  async addUserToTopic(@Body() dto: AddUserToTopicDto) {
+    return this.ontologyService.addUserToTopic(dto);
   }
 
   // POST /ontology/click - Handle hypertext click (forward to hypertext_backend)
