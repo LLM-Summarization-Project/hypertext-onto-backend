@@ -124,6 +124,24 @@
                         },
                         "description": "Add user to an existing topic"
                     }
+                },
+                {
+                    "name": "POST - Get Topic ID",
+                    "request": {
+                        "method": "POST",
+                        "url": "{{baseUrl}}/ontology/topic/id",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"name\": \"artificial intelligence\"\n}"
+                        },
+                        "description": "Get topic ID by name"
+                    }
                 }
             ]
         },

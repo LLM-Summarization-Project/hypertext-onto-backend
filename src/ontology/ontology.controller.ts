@@ -2,6 +2,7 @@ import { Controller, Get, Post, Param, Body, NotFoundException, ParseIntPipe } f
 import { OntologyService } from './ontology.service';
 import { CreateTopicDto } from './dto/create-topic.dto';
 import { AddUserToTopicDto } from './dto/add-user-to-topic.dto';
+import { GetTopicIdDto } from './dto/get-topic-id.dto';
 
 class ClickTopicDto {
   userId: number;
@@ -39,6 +40,12 @@ export class OntologyController {
   @Post('topic/assign-user')
   async addUserToTopic(@Body() dto: AddUserToTopicDto) {
     return this.ontologyService.addUserToTopic(dto);
+  }
+
+  // POST /ontology/topic/id - Get topic ID by name
+  @Post('topic/id')
+  async getTopicIdByName(@Body() dto: GetTopicIdDto) {
+    return this.ontologyService.getTopicIdByName(dto);
   }
 
   // POST /ontology/click - Handle hypertext click (forward to hypertext_backend)

@@ -5,6 +5,7 @@ import { DEMO_ONTOLOGY } from './ontology.data';
 import { CreateTopicDto } from './dto/create-topic.dto';
 import axios from 'axios';
 import { AddUserToTopicDto } from './dto/add-user-to-topic.dto';
+import { GetTopicIdDto } from './dto/get-topic-id.dto';
 import { NotFoundException } from '@nestjs/common';
 
 @Injectable()
@@ -126,6 +127,22 @@ export class OntologyService {
 
     // 3. Return success
     return { success: true, message: `User added to topic "${dto.topicName}"` };
+  }
+
+  /**
+   * Get topic ID by name
+   */
+  async getTopicIdByName(dto: GetTopicIdDto) {
+    const topic = await this.prisma.ontologyTopic.findUnique({
+      where: { name: dto.name },
+      select: { id: true },
+    });
+
+    if (!topic) {
+      throw new NotFoundException(`Topic "${dto.name}" not found`);
+    }
+
+    return topic;
   }
 
   /**
