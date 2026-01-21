@@ -48,6 +48,14 @@
                     }
                 },
                 {
+                    "name": "GET - Topics by User (Private)",
+                    "request": {
+                        "method": "GET",
+                        "url": "{{baseUrl}}/ontology/topics/user/1/private",
+                        "description": "Get topics for a specific user with privacy coloring (user's color for exclusive, complementary for shared)"
+                    }
+                },
+                {
                     "name": "GET - Topic by Name",
                     "request": {
                         "method": "GET",
