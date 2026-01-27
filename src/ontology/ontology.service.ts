@@ -738,13 +738,28 @@ export class OntologyService {
    * Useful for admin/legend display to show who is who
    */
   async getUsersColors(userIds: number[]) {
-    const colors: Record<number, string> = {};
+    // Fetch users to get their roles
+    const users = await this.prisma.user.findMany({
+      where: {
+        id: { in: userIds },
+      },
+      select: {
+        id: true,
+        role: true,
+      },
+    });
+
+    const userMap = new Map(users.map(u => [u.id, u.role]));
+    const result: Record<number, { color: string, role: string }> = {};
 
     for (const userId of userIds) {
-      colors[userId] = this.getUserColor(userId);
+      result[userId] = {
+        color: this.getUserColor(userId),
+        role: userMap.get(userId) || 'USER',
+      };
     }
 
-    return colors;
+    return result;
   }
 
   /**
