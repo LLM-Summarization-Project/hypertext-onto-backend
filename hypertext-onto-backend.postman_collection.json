@@ -1,0 +1,447 @@
+{
+    "info": {
+        "_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+        "name": "Hypertext Ontology Backend",
+        "description": "API collection for Hypertext Ontology Backend\n\nBase URL: http://localhost:3001",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:3001",
+            "type": "string"
+        }
+    ],
+    "item": [
+        {
+            "name": "App",
+            "item": [
+                {
+                    "name": "Health Check",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                ""
+                            ]
+                        },
+                        "description": "GET / - Basic health check endpoint"
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Hyperlink",
+            "item": [
+                {
+                    "name": "Get All Keys",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/hyperlink",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "hyperlink"
+                            ]
+                        },
+                        "description": "GET /hyperlink - Get all hyperlink keys"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Content By Word",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/hyperlink/:word",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "hyperlink",
+                                ":word"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "word",
+                                    "value": "example-word",
+                                    "description": "The word to get content for"
+                                }
+                            ]
+                        },
+                        "description": "GET /hyperlink/:word - Get content for a specific word"
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Ontology",
+            "item": [
+                {
+                    "name": "Demo Data",
+                    "item": [
+                        {
+                            "name": "Get Whole Ontology",
+                            "request": {
+                                "method": "GET",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{baseUrl}}/ontology",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "ontology"
+                                    ]
+                                },
+                                "description": "GET /ontology - Get demo ontology data"
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Get Node By Word",
+                            "request": {
+                                "method": "GET",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{baseUrl}}/ontology/node/:word",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "ontology",
+                                        "node",
+                                        ":word"
+                                    ],
+                                    "variable": [
+                                        {
+                                            "key": "word",
+                                            "value": "example-word",
+                                            "description": "The word to find in demo data"
+                                        }
+                                    ]
+                                },
+                                "description": "GET /ontology/node/:word - Find node in demo data"
+                            },
+                            "response": []
+                        }
+                    ]
+                },
+                {
+                    "name": "Topics",
+                    "item": [
+                        {
+                            "name": "Create or Update Topic",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"userId\": 1,\n    \"name\": \"Machine Learning\",\n    \"description\": \"Optional description about the topic\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/ontology/topic",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "ontology",
+                                        "topic"
+                                    ]
+                                },
+                                "description": "POST /ontology/topic - Create topic + call hypertext_backend for LLM"
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Add User to Topic",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"userId\": 1,\n    \"topicName\": \"Machine Learning\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/ontology/topic/assign-user",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "ontology",
+                                        "topic",
+                                        "assign-user"
+                                    ]
+                                },
+                                "description": "POST /ontology/topic/assign-user - Add user to existing topic"
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Get Topic ID By Name",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"name\": \"Machine Learning\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/ontology/topic/id",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "ontology",
+                                        "topic",
+                                        "id"
+                                    ]
+                                },
+                                "description": "POST /ontology/topic/id - Get topic ID by name"
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Get Topic By Name",
+                            "request": {
+                                "method": "GET",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{baseUrl}}/ontology/topic/:name",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "ontology",
+                                        "topic",
+                                        ":name"
+                                    ],
+                                    "variable": [
+                                        {
+                                            "key": "name",
+                                            "value": "Machine Learning",
+                                            "description": "Topic name to retrieve"
+                                        }
+                                    ]
+                                },
+                                "description": "GET /ontology/topic/:name - Get topic by name with full details"
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Get All Topics (DB)",
+                            "request": {
+                                "method": "GET",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{baseUrl}}/ontology/topics",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "ontology",
+                                        "topics"
+                                    ]
+                                },
+                                "description": "GET /ontology/topics - Get all topics from DB as graph"
+                            },
+                            "response": []
+                        }
+                    ]
+                },
+                {
+                    "name": "User Topics",
+                    "item": [
+                        {
+                            "name": "Get Topics By User",
+                            "request": {
+                                "method": "GET",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{baseUrl}}/ontology/topics/user/:userId",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "ontology",
+                                        "topics",
+                                        "user",
+                                        ":userId"
+                                    ],
+                                    "variable": [
+                                        {
+                                            "key": "userId",
+                                            "value": "1",
+                                            "description": "User ID"
+                                        }
+                                    ]
+                                },
+                                "description": "GET /ontology/topics/user/:userId - Get topics for a specific user (ADMIN: shows blended colors)"
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Get Topics By User (Private)",
+                            "request": {
+                                "method": "GET",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{baseUrl}}/ontology/topics/user/:userId/private",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "ontology",
+                                        "topics",
+                                        "user",
+                                        ":userId",
+                                        "private"
+                                    ],
+                                    "variable": [
+                                        {
+                                            "key": "userId",
+                                            "value": "1",
+                                            "description": "User ID"
+                                        }
+                                    ]
+                                },
+                                "description": "GET /ontology/topics/user/:userId/private - Get topics for user with PRIVACY coloring (user's color for exclusive nodes, complementary color for shared nodes)"
+                            },
+                            "response": []
+                        }
+                    ]
+                },
+                {
+                    "name": "World & Pedigree",
+                    "item": [
+                        {
+                            "name": "Get World Ontology",
+                            "request": {
+                                "method": "GET",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{baseUrl}}/ontology/world",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "ontology",
+                                        "world"
+                                    ]
+                                },
+                                "description": "GET /ontology/world - Get world topics (with user details)"
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Get Pedigree",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"name\": \"Machine Learning\",\n    \"userId\": 1\n}"
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/ontology/pedigree",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "ontology",
+                                        "pedigree"
+                                    ]
+                                },
+                                "description": "POST /ontology/pedigree - Get all connected nodes (relatives) for a topic with privacy-focused coloring"
+                            },
+                            "response": []
+                        }
+                    ]
+                },
+                {
+                    "name": "Actions",
+                    "item": [
+                        {
+                            "name": "Handle Hypertext Click",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"userId\": 1,\n    \"clickedWord\": \"example-hyperlink\",\n    \"parentTopicId\": \"optional-parent-id\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/ontology/click",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "ontology",
+                                        "click"
+                                    ]
+                                },
+                                "description": "POST /ontology/click - Handle hypertext click (forward to hypertext_backend)"
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Sync From Hypertext Backend",
+                            "request": {
+                                "method": "POST",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{baseUrl}}/ontology/sync",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "ontology",
+                                        "sync"
+                                    ]
+                                },
+                                "description": "POST /ontology/sync - Sync topics from hypertext_backend"
+                            },
+                            "response": []
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

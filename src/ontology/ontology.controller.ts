@@ -3,6 +3,7 @@ import { OntologyService } from './ontology.service';
 import { CreateTopicDto } from './dto/create-topic.dto';
 import { AddUserToTopicDto } from './dto/add-user-to-topic.dto';
 import { GetTopicIdDto } from './dto/get-topic-id.dto';
+import { GetPedigreeDto } from './dto/get-pedigree.dto';
 
 class ClickTopicDto {
   userId: number;
@@ -89,6 +90,13 @@ export class OntologyController {
     const topic = await this.ontologyService.getTopicByName(decodeURIComponent(name));
     if (!topic) throw new NotFoundException(`Topic "${name}" not found`);
     return topic;
+  }
+
+  // POST /ontology/pedigree - Get all connected nodes (relatives) for a topic
+  // Uses privacy-focused coloring (user's color for exclusive nodes, complementary for shared)
+  @Post('pedigree')
+  async getPedigree(@Body() dto: GetPedigreeDto) {
+    return this.ontologyService.getPedigree(dto.name, dto.userId);
   }
 
   // POST /ontology/sync - Sync topics from hypertext_backend

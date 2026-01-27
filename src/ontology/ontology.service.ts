@@ -609,6 +609,121 @@ export class OntologyService {
   }
 
   /**
+   * Get pedigree - ALL nodes connected to a topic by edges (full family tree)
+   * Recursively traverses all connections, only includes nodes user has access to
+   * Uses privacy-focused coloring like getTopicsByUserPrivate
+   */
+  async getPedigree(name: string, userId: number) {
+    // 1. Find the main topic (must be accessible by this user)
+    const mainTopic = await this.prisma.ontologyTopic.findFirst({
+      where: {
+        name,
+        users: { some: { userId } },
+      },
+    });
+
+    if (!mainTopic) {
+      throw new NotFoundException(`Topic "${name}" not found or you don't have access`);
+    }
+
+    // 2. BFS to find ALL connected topics that user has access to
+    const visited = new Set<string>();
+    const queue: string[] = [mainTopic.id];
+    visited.add(mainTopic.id);
+
+    while (queue.length > 0) {
+      const currentId = queue.shift()!;
+
+      // Get all relations for current topic
+      const relations = await this.prisma.ontologyTopicRelation.findMany({
+        where: {
+          OR: [
+            { fromTopicId: currentId },
+            { toTopicId: currentId },
+          ],
+        },
+      });
+
+      // Collect potential neighbor IDs
+      const neighborIds = new Set<string>();
+      for (const rel of relations) {
+        if (rel.fromTopicId !== currentId) neighborIds.add(rel.fromTopicId);
+        if (rel.toTopicId !== currentId) neighborIds.add(rel.toTopicId);
+      }
+
+      // Check which neighbors the user has access to and haven't been visited
+      for (const neighborId of neighborIds) {
+        if (!visited.has(neighborId)) {
+          const hasAccess = await this.prisma.userOntologyTopic.findUnique({
+            where: {
+              userId_topicId: { userId, topicId: neighborId },
+            },
+          });
+
+          if (hasAccess) {
+            visited.add(neighborId);
+            queue.push(neighborId);
+          }
+        }
+      }
+    }
+
+    // 3. Fetch all visited topics with their data
+    const allTopics = await this.prisma.ontologyTopic.findMany({
+      where: {
+        id: { in: Array.from(visited) },
+      },
+      include: {
+        outgoingRelations: true,
+        users: { select: { userId: true } },
+      },
+    });
+
+    // 4. Get colors for privacy-focused display
+    const userMainColor = this.getUserColor(userId);
+    const sharedColor = this.getComplementaryColor(userId);
+
+    // 5. Build nodes
+    const nodes = allTopics.map((topic) => {
+      const userIds = topic.users.map(u => u.userId);
+      const isExclusive = userIds.length === 1 && userIds[0] === userId;
+
+      return {
+        id: topic.id,
+        target: topic.name,
+        weight: topic.frequency,
+        description: topic.description,
+        relatedTopics: topic.relatedTopics,
+        color: isExclusive ? userMainColor : sharedColor,
+        isShared: !isExclusive,
+        isMainTopic: topic.id === mainTopic.id,
+      };
+    });
+
+    // 6. Build links - only between topics in visited set
+    const links: { source: string; target: string; weight: number }[] = [];
+    const linkSet = new Set<string>();
+
+    for (const topic of allTopics) {
+      for (const rel of topic.outgoingRelations) {
+        if (visited.has(rel.toTopicId)) {
+          const linkKey = `${rel.fromTopicId}-${rel.toTopicId}`;
+          if (!linkSet.has(linkKey)) {
+            linkSet.add(linkKey);
+            links.push({
+              source: rel.fromTopicId,
+              target: rel.toTopicId,
+              weight: rel.weight ?? 1,
+            });
+          }
+        }
+      }
+    }
+
+    return { nodes, links };
+  }
+
+  /**
    * Sync from hypertext_backend
    */
   async syncFromHypertextBackend() {
