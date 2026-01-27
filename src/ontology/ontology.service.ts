@@ -614,56 +614,66 @@ export class OntologyService {
    * Uses privacy-focused coloring like getTopicsByUserPrivate
    */
   async getPedigree(name: string, userId: number) {
-    // 1. Find the main topic (must be accessible by this user)
+    // 1. First check if the topic exists at all (case-insensitive)
+    const topicExists = await this.prisma.ontologyTopic.findFirst({
+      where: {
+        name: { equals: name, mode: 'insensitive' },
+      },
+    });
+
+    if (!topicExists) {
+      throw new NotFoundException(`Topic "${name}" not found in the system`);
+    }
+
+    // 2. Now check if user has access to this topic (case-insensitive)
     const mainTopic = await this.prisma.ontologyTopic.findFirst({
       where: {
-        name,
+        name: { equals: name, mode: 'insensitive' },
         users: { some: { userId } },
       },
     });
 
     if (!mainTopic) {
-      throw new NotFoundException(`Topic "${name}" not found or you don't have access`);
+      throw new NotFoundException(`You don't have access to topic "${name}"`);
     }
 
-    // 2. BFS to find ALL connected topics that user has access to
+    // 3. OPTIMIZED: Pre-load all topics user has access to and all relations in bulk
+    // This avoids N+1 query problem
+    const userAccessibleTopics = await this.prisma.userOntologyTopic.findMany({
+      where: { userId },
+      select: { topicId: true },
+    });
+    const accessibleTopicIds = new Set(userAccessibleTopics.map(t => t.topicId));
+
+    // Load all relations in one query
+    const allRelations = await this.prisma.ontologyTopicRelation.findMany();
+
+    // Build adjacency map in memory
+    const adjacencyMap = new Map<string, Set<string>>();
+    for (const rel of allRelations) {
+      if (!adjacencyMap.has(rel.fromTopicId)) {
+        adjacencyMap.set(rel.fromTopicId, new Set());
+      }
+      if (!adjacencyMap.has(rel.toTopicId)) {
+        adjacencyMap.set(rel.toTopicId, new Set());
+      }
+      adjacencyMap.get(rel.fromTopicId)!.add(rel.toTopicId);
+      adjacencyMap.get(rel.toTopicId)!.add(rel.fromTopicId);
+    }
+
+    // 4. BFS in memory (no database calls in the loop!)
     const visited = new Set<string>();
     const queue: string[] = [mainTopic.id];
     visited.add(mainTopic.id);
 
     while (queue.length > 0) {
       const currentId = queue.shift()!;
+      const neighbors = adjacencyMap.get(currentId) || new Set();
 
-      // Get all relations for current topic
-      const relations = await this.prisma.ontologyTopicRelation.findMany({
-        where: {
-          OR: [
-            { fromTopicId: currentId },
-            { toTopicId: currentId },
-          ],
-        },
-      });
-
-      // Collect potential neighbor IDs
-      const neighborIds = new Set<string>();
-      for (const rel of relations) {
-        if (rel.fromTopicId !== currentId) neighborIds.add(rel.fromTopicId);
-        if (rel.toTopicId !== currentId) neighborIds.add(rel.toTopicId);
-      }
-
-      // Check which neighbors the user has access to and haven't been visited
-      for (const neighborId of neighborIds) {
-        if (!visited.has(neighborId)) {
-          const hasAccess = await this.prisma.userOntologyTopic.findUnique({
-            where: {
-              userId_topicId: { userId, topicId: neighborId },
-            },
-          });
-
-          if (hasAccess) {
-            visited.add(neighborId);
-            queue.push(neighborId);
-          }
+      for (const neighborId of neighbors) {
+        if (!visited.has(neighborId) && accessibleTopicIds.has(neighborId)) {
+          visited.add(neighborId);
+          queue.push(neighborId);
         }
       }
     }

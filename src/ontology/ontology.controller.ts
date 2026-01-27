@@ -92,11 +92,14 @@ export class OntologyController {
     return topic;
   }
 
-  // POST /ontology/pedigree - Get all connected nodes (relatives) for a topic
+  // GET /ontology/pedigree/:name/:userId - Get all connected nodes (relatives) for a topic
   // Uses privacy-focused coloring (user's color for exclusive nodes, complementary for shared)
-  @Post('pedigree')
-  async getPedigree(@Body() dto: GetPedigreeDto) {
-    return this.ontologyService.getPedigree(dto.name, dto.userId);
+  @Get('pedigree/:name/:userId')
+  async getPedigree(
+    @Param('name') name: string,
+    @Param('userId', ParseIntPipe) userId: number,
+  ) {
+    return this.ontologyService.getPedigree(decodeURIComponent(name), userId);
   }
 
   // POST /ontology/sync - Sync topics from hypertext_backend
