@@ -4,6 +4,7 @@ import { CreateTopicDto } from './dto/create-topic.dto';
 import { AddUserToTopicDto } from './dto/add-user-to-topic.dto';
 import { GetTopicIdDto } from './dto/get-topic-id.dto';
 import { GetPedigreeDto } from './dto/get-pedigree.dto';
+import { GetUsersColorsDto } from './dto/get-users-colors.dto';
 
 class ClickTopicDto {
   userId: number;
@@ -100,6 +101,12 @@ export class OntologyController {
     @Param('userId', ParseIntPipe) userId: number,
   ) {
     return this.ontologyService.getPedigree(decodeURIComponent(name), userId);
+  }
+
+  // POST /ontology/users/colors - Get colors for list of user IDs (Admin/Legend)
+  @Post('users/colors')
+  async getUsersColors(@Body() dto: GetUsersColorsDto) {
+    return this.ontologyService.getUsersColors(dto.userIds);
   }
 
   // POST /ontology/sync - Sync topics from hypertext_backend

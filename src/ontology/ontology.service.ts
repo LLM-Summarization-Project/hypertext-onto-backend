@@ -734,6 +734,20 @@ export class OntologyService {
   }
 
   /**
+   * Get colors for a list of users
+   * Useful for admin/legend display to show who is who
+   */
+  async getUsersColors(userIds: number[]) {
+    const colors: Record<number, string> = {};
+
+    for (const userId of userIds) {
+      colors[userId] = this.getUserColor(userId);
+    }
+
+    return colors;
+  }
+
+  /**
    * Sync from hypertext_backend
    */
   async syncFromHypertextBackend() {
